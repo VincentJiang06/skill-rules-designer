@@ -1,6 +1,6 @@
 ---
 name: skill-rules-designer
-version: v1.1
+version: v1.2
 description: >
   Analyzes an existing Claude Code skill and designs an optimal rules/ file structure.
   Covers three operations: (1) compressing SKILL.md by moving verbose content into rules modules,
