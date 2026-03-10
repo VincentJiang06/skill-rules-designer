@@ -110,7 +110,8 @@ After you say "go", the skill writes all files in the correct order — rules fi
 | | Skill Creator | skill-rules-designer |
 |--|--------------|---------------------|
 | Write initial skill draft | ✅ | ❌ |
-| Run evals and benchmark | ✅ | ❌ |
+| Run evals and benchmark | ✅ | ✅ (v1.1) |
+| A/B comparison with scorecard viewer | ✅ | ✅ (v1.1) |
 | Optimize trigger description | ✅ | ❌ |
 | Design `rules/` file structure | ❌ | ✅ |
 | Identify encapsulation opportunities | ❌ | ✅ |
@@ -118,7 +119,55 @@ After you say "go", the skill writes all files in the correct order — rules fi
 | Harden vague instructions | ❌ | ✅ |
 | Lossless restructuring guarantee | ❌ | ✅ |
 
-Use Skill Creator to build and benchmark your skill. Use `skill-rules-designer` when the skill is working but needs structural optimization.
+Use Skill Creator to build and benchmark your skill. Use `skill-rules-designer` when the skill is working but needs structural optimization — or to verify that a restructuring didn't degrade quality.
+
+---
+
+## Eval & A/B Comparison (v1.1)
+
+v1.1 adds a full eval workflow so you can verify a restructuring actually improved the skill without degrading output quality.
+
+### What's included
+
+```
+evals/evals.json          — 3 pre-built test cases (compress+encapsulate, harden, enrich)
+agents/grader.md          — assertion grader agent
+agents/comparator.md      — blind A/B comparator agent
+agents/analyzer.md        — post-hoc analyzer agent
+references/schemas.md     — JSON schemas for all eval artifacts
+eval-viewer/              — interactive result viewer with A/B scorecard
+```
+
+> **Note:** The `agents/`, `references/schemas.md`, and `eval-viewer/` components are directly based on Anthropic's official [Skill Creator](https://github.com/anthropics/anthropic-agent-skills/tree/main/skills/skill-creator). The grader, comparator, and analyzer agent prompts, the JSON schemas, and the `generate_review.py` server were taken from that project and adapted for this skill's use case. The `viewer.html` was extended with a new A/B Scorecard section at the top of the Benchmark tab.
+
+### A/B Scorecard viewer
+
+After a comparison run, the viewer's **Benchmark tab** opens with three large metric cards:
+
+| Card | What it shows |
+|------|--------------|
+| **Quality (Pass Rate)** | Pass rate for version A vs B — winner highlighted green |
+| **Token Usage** | Mean tokens per run — lower is green (cost tradeoff) |
+| **Duration** | Mean wall-clock time — lower is green (speed tradeoff) |
+
+Below the cards: aggregate stats table with delta column, per-eval assertion breakdown side-by-side for both versions, and analyst notes.
+
+### Running an A/B comparison
+
+Described in full in `SKILL.md` under "Evaluating the skill". Short version:
+
+1. Spawn executor subagents for `version_a` and `version_b` on all 3 evals in the same turn
+2. Capture `total_tokens` + `duration_ms` from each subagent notification → `timing.json`
+3. Grade each run with the grader agent → `grading.json`
+4. Assemble `benchmark.json` (schemas in `references/schemas.md`)
+5. Launch the viewer:
+
+```bash
+python eval-viewer/generate_review.py \
+  <workspace>/ab-comparison \
+  --skill-name "skill-rules-designer" \
+  --benchmark <workspace>/benchmark.json
+```
 
 ---
 
